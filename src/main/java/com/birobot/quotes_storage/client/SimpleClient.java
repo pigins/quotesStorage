@@ -1,12 +1,11 @@
 package com.birobot.quotes_storage.client;
 
-import com.birobot.quotes_storage.client.dto.Candle;
-import com.birobot.quotes_storage.client.dto.CandlestickInterval;
-import com.birobot.quotes_storage.client.dto.ExchangeInfo;
-import com.birobot.quotes_storage.client.dto.SymbolInfo;
+import com.birobot.quotes_storage.dto.Candle;
+import com.birobot.quotes_storage.dto.CandlestickInterval;
+import com.birobot.quotes_storage.dto.ExchangeInfo;
+import com.birobot.quotes_storage.dto.SymbolInfo;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import okhttp3.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,12 +28,7 @@ public class SimpleClient implements Client {
             .addPathSegment("api")
             .addPathSegment("v1")
             .build();
-    private static ObjectMapper mapper = new ObjectMapper();
-    static {
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(Candle.class, new CandleDesirializer());
-        mapper.registerModule(module);
-    }
+    private static ObjectMapper mapper = new ClientObjectMapper();
     private static JavaType candleListType = mapper.getTypeFactory().constructCollectionType(List.class, Candle.class);
 
     private OkHttpClient okHttpClient;

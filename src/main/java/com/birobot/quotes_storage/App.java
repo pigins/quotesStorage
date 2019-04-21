@@ -1,25 +1,28 @@
 package com.birobot.quotes_storage;
 
+import com.birobot.quotes_storage.dto.CandleDeserializer;
 import com.birobot.quotes_storage.client.Client;
 import com.birobot.quotes_storage.client.ProxyClient;
-import com.birobot.quotes_storage.config.DatabaseConfig;
+import com.birobot.quotes_storage.dto.Candle;
 import com.birobot.quotes_storage.config.ClientConfig;
+import com.birobot.quotes_storage.dto.CandleSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import okhttp3.OkHttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.birobot.quotes_storage.agent.DownloadAgent;
 import com.birobot.quotes_storage.client.SimpleClient;
 import com.birobot.quotes_storage.database.QuotesDatabase;
-import org.hsqldb.jdbc.JDBCPool;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import javax.annotation.PostConstruct;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,6 +46,17 @@ public class App {
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
+    }
+
+    @Bean
+    @Primary
+    public ObjectMapper objectMapper(Jackson2ObjectMapperBuilder builder) {
+        ObjectMapper objectMapper = builder.createXmlMapper(false).build();
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Candle.class, new CandleDeserializer());
+        module.addSerializer(new CandleSerializer(Candle.class));
+        objectMapper.registerModule(module);
+        return objectMapper;
     }
 
     @PostConstruct
@@ -79,10 +93,12 @@ public class App {
     public Client initClient() {
         Client client;
         OkHttpClient okHttpClient = (new OkHttpClient.Builder()).pingInterval(20L, TimeUnit.SECONDS).build();
-        if (clientConfig.getProxies().size() > 0) {
+        if ((clientConfig.getProxies() != null) && clientConfig.getProxies().size() > 0) {
             client = new ProxyClient(okHttpClient, clientConfig.getProxies());
+            logger.info("init proxy client");
         } else {
             client = new SimpleClient(okHttpClient);
+            logger.info("init simple client");
         }
         client.init();
         return client;

@@ -1,7 +1,7 @@
 package com.birobot.quotes_storage.client;
 
-import com.birobot.quotes_storage.client.dto.Candle;
-import com.birobot.quotes_storage.client.dto.ExchangeInfo;
+import com.birobot.quotes_storage.dto.Candle;
+import com.birobot.quotes_storage.dto.ExchangeInfo;
 
 import java.time.OffsetDateTime;
 import java.util.List;

@@ -3,7 +3,7 @@ package com.birobot.quotes_storage.client;
 import okhttp3.OkHttpClient;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import com.birobot.quotes_storage.client.dto.ExchangeInfo;
+import com.birobot.quotes_storage.dto.ExchangeInfo;
 
 import java.time.OffsetDateTime;
 import java.util.concurrent.TimeUnit;

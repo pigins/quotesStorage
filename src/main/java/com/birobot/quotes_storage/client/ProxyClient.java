@@ -2,8 +2,8 @@ package com.birobot.quotes_storage.client;
 
 import com.birobot.quotes_storage.config.ProxySocketAddress;
 import okhttp3.OkHttpClient;
-import com.birobot.quotes_storage.client.dto.Candle;
-import com.birobot.quotes_storage.client.dto.ExchangeInfo;
+import com.birobot.quotes_storage.dto.Candle;
+import com.birobot.quotes_storage.dto.ExchangeInfo;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;

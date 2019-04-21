@@ -1,4 +1,4 @@
-package com.birobot.quotes_storage.client.dto;
+package com.birobot.quotes_storage.dto;
 
 import java.time.*;
 

@@ -1,7 +1,7 @@
 package com.birobot.quotes_storage.agent;
 
 import com.birobot.quotes_storage.client.Client;
-import com.birobot.quotes_storage.client.dto.Candle;
+import com.birobot.quotes_storage.dto.Candle;
 import com.birobot.quotes_storage.database.QuotesDatabase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,7 +34,7 @@ public class DownloadAgent {
 
     public void downloadNext() {
         List<Candle> oneMinuteBars = client.getOneMinuteBars(symbol, latestClose);
-        logger.debug("received {} bars for {} and latest close {} ", oneMinuteBars.size(), symbol, latestClose);
+        logger.info("received {} bars for {} and latest close {} ", oneMinuteBars.size(), symbol, latestClose);
         if (oneMinuteBars.size() != 0) {
             database.insertQuotes(symbol, oneMinuteBars);
             Candle lastCandle = oneMinuteBars.get(oneMinuteBars.size() - 1);

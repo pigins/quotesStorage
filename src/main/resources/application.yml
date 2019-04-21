@@ -1,25 +1,14 @@
 # Spring Boot
 server:
   port: 8080
+logging:
+  path: C:\Users\serg\Desktop\quotesStorage\logs
 # Database
 database:
   schema-name: QUOTES
   path: C:\Users\serg\.quotes_store\data
 # Client
 client:
-  proxies:
-  - host: 127.0.0.1
-    port: 2222
-  - host: 127.0.0.2
-    port: 3333
-  - host: 127.0.0.3
-    port: 4444
   symbols:
-  - LSKBNB
   - ETHTUSD
-  - NEOETH
-  - WAVESBNB
-  - VENUSDT
-  - ADATUSD
   - SNTBTC
-  - VIABNB

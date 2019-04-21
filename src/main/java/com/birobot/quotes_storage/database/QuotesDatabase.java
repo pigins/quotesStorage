@@ -1,6 +1,6 @@
 package com.birobot.quotes_storage.database;
 
-import com.birobot.quotes_storage.client.dto.Candle;
+import com.birobot.quotes_storage.dto.Candle;
 import com.birobot.quotes_storage.config.DatabaseConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,6 +8,8 @@ import org.hsqldb.jdbc.JDBCPool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -88,10 +90,8 @@ public class QuotesDatabase {
     }
 
     public OffsetDateTime getLatestCloseDate(String tableName) {
-        return template.query(
-                "SELECT MAX(CLOSE_TIME) FROM " + tableName,
-                (resultSet, i) -> (OffsetDateTime) resultSet.getObject(i))
-                .get(0);
+        return template.queryForObject(
+                "SELECT MAX(CLOSE_TIME) FROM " + tableName, OffsetDateTime.class);
     }
 
     private boolean tableExist(String tableName) {
@@ -143,7 +143,7 @@ public class QuotesDatabase {
     }
 
     private void createStructure() {
-        template.execute(String.format("ALTER SCHEMA PUBLIC RENAME TO %s", dbConfig.getSchemaName()));
+        template.execute(String.format("CREATE SCHEMA IF NOT EXISTS %s", dbConfig.getSchemaName()));
     }
 
     private void createTemplate() {
@@ -153,5 +153,36 @@ public class QuotesDatabase {
         dataSource.setUser("SA");
         dataSource.setPassword("");
         template = new JdbcTemplate(dataSource);
+    }
+
+    public List<String> getAllQuoteTableNames() {
+        return template.queryForList(String.format(
+                "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '%s'",
+                dbConfig.getSchemaName()), String.class
+        );
+    }
+
+    public List<Candle> getKlines(String symbol, OffsetDateTime begin, OffsetDateTime end, Integer limit) {
+        return template.query(
+                String.format("SELECT * FROM %s WHERE OPEN_TIME >= ? AND CLOSE_TIME <= ? ORDER BY OPEN_TIME DESC LIMIT ?", symbol),
+                preparedStatement -> {
+                    preparedStatement.setObject(1, begin);
+                    preparedStatement.setObject(2, end);
+                    preparedStatement.setInt(3, limit);
+                }, (rs, i) -> {
+                    Candle candle = new Candle();
+                    candle.setOpenTime((OffsetDateTime) rs.getObject(1));
+                    candle.setOpen(rs.getDouble(2));
+                    candle.setHigh(rs.getDouble(3));
+                    candle.setLow(rs.getDouble(4));
+                    candle.setClose(rs.getDouble(5));
+                    candle.setVolume(rs.getDouble(6));
+                    candle.setCloseTime((OffsetDateTime) rs.getObject(7));
+                    candle.setQuoteAssetVolume(rs.getDouble(8));
+                    candle.setNumberOfTrades(rs.getInt(9));
+                    candle.setTakerBuyBaseAssetVolume(rs.getDouble(10));
+                    candle.setTakerBuyQuoteAssetVolume(rs.getDouble(11));
+                    return candle;
+                });
     }
 }
