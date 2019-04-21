@@ -1,15 +1,15 @@
 package com.birobot.quotes_storage.config;
 
-public class ProxyServer {
+public class ProxySocketAddress {
     private String host;
     private int port;
 
-    public ProxyServer(String host, int port) {
+    public ProxySocketAddress(String host, int port) {
         this.host = host;
         this.port = port;
     }
 
-    public ProxyServer() {
+    public ProxySocketAddress() {
     }
 
     public String getHost() {
@@ -30,7 +30,7 @@ public class ProxyServer {
 
     @Override
     public String toString() {
-        return "ProxyServer{" +
+        return "ProxySocketAddress{" +
                 "host='" + host + '\'' +
                 ", port=" + port +
                 '}';

@@ -32,10 +32,14 @@ import java.util.stream.Collectors;
 public class App {
     private static Logger logger = LogManager.getLogger();
 
+    private final ClientConfig clientConfig;
+    private final QuotesDatabase db;
+
     @Autowired
-    ClientConfig clientConfig;
-    @Autowired
-    QuotesDatabase db;
+    public App(ClientConfig clientConfig, QuotesDatabase db) {
+        this.clientConfig = clientConfig;
+        this.db = db;
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);

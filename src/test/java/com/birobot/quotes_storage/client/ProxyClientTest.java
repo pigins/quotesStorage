@@ -3,7 +3,7 @@ package com.birobot.quotes_storage.client;
 import okhttp3.OkHttpClient;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import com.birobot.quotes_storage.config.ProxyServer;
+import com.birobot.quotes_storage.config.ProxySocketAddress;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -16,8 +16,8 @@ public class ProxyClientTest {
     @BeforeClass
     public void setUp() {
         OkHttpClient okHttpClient = (new okhttp3.OkHttpClient.Builder()).pingInterval(20L, TimeUnit.SECONDS).build();
-        ProxyServer proxyServer = new ProxyServer("190.8.168.252", 8080);
-        client = new ProxyClient(okHttpClient, List.of(proxyServer));
+        ProxySocketAddress proxySocketAddress = new ProxySocketAddress("190.8.168.252", 8080);
+        client = new ProxyClient(okHttpClient, List.of(proxySocketAddress));
         client.init();
     }
 

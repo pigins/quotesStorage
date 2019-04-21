@@ -9,14 +9,14 @@ import java.util.Set;
 @Component
 @ConfigurationProperties(prefix="client")
 public class ClientConfig {
-    private List<ProxyServer> proxies;
+    private List<ProxySocketAddress> proxies;
     private Set<String> symbols;
 
-    public List<ProxyServer> getProxies() {
+    public List<ProxySocketAddress> getProxies() {
         return proxies;
     }
 
-    public void setProxies(List<ProxyServer> proxies) {
+    public void setProxies(List<ProxySocketAddress> proxies) {
         this.proxies = proxies;
     }
 
