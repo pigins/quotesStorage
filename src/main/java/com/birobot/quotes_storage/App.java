@@ -10,11 +10,16 @@ import org.apache.logging.log4j.Logger;
 import com.birobot.quotes_storage.agent.DownloadAgent;
 import com.birobot.quotes_storage.client.SimpleClient;
 import com.birobot.quotes_storage.database.QuotesDatabase;
+import org.hsqldb.jdbc.JDBCPool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.core.JdbcTemplate;
 
+import javax.annotation.PostConstruct;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,25 +29,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @SpringBootApplication
-public class App implements CommandLineRunner {
+public class App {
     private static Logger logger = LogManager.getLogger();
 
-    @Autowired
-    DatabaseConfig databaseConfig;
     @Autowired
     ClientConfig clientConfig;
     @Autowired
     QuotesDatabase db;
 
     public static void main(String[] args) {
-        System.out.println("foo");
         SpringApplication.run(App.class, args);
     }
 
-    @Override
-    public void run(String... args) {
-        System.out.println(databaseConfig);
-        System.out.println(clientConfig);
+    @PostConstruct
+    public void run() {
         Client client = initClient();
         List<DownloadAgent> agents = initDownloadAgents(db, client);
         runAgents(agents);
