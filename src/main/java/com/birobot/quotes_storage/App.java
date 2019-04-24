@@ -1,5 +1,6 @@
 package com.birobot.quotes_storage;
 
+import com.birobot.quotes_storage.client.CompositeClient;
 import com.birobot.quotes_storage.dto.CandleDeserializer;
 import com.birobot.quotes_storage.client.Client;
 import com.birobot.quotes_storage.client.ProxyClient;
@@ -36,12 +37,10 @@ public class App {
     private static Logger logger = LogManager.getLogger();
 
     private final ClientConfig clientConfig;
-    private final QuotesDatabase db;
 
     @Autowired
-    public App(ClientConfig clientConfig, QuotesDatabase db) {
+    public App(ClientConfig clientConfig) {
         this.clientConfig = clientConfig;
-        this.db = db;
     }
 
     public static void main(String[] args) {
@@ -59,63 +58,28 @@ public class App {
         return objectMapper;
     }
 
-    @PostConstruct
-    public void run() {
-        Client client = initClient();
-        List<DownloadAgent> agents = initDownloadAgents(db, client);
-        runAgents(agents);
-    }
-
-    public void runAgents(List<DownloadAgent> agents) {
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-        Runtime.getRuntime().addShutdownHook(new Thread(executor::shutdown));
-        executor.scheduleAtFixedRate(() -> agents.forEach(agent -> {
-            while (agent.needNext()) {
-                try {
-                    agent.downloadNext();
-                } catch (Exception e) {
-                    logger.error(e);
-                }
-            }
-        }), 0, 10, TimeUnit.MINUTES);
-    }
-
-    public List<DownloadAgent> initDownloadAgents(QuotesDatabase db, Client client) {
-        Set<String> validSymbols = getValidSymbols(client);
-        List<DownloadAgent> agents = validSymbols
-                .stream()
-                .map(symbol -> new DownloadAgent(symbol, db, client))
-                .collect(Collectors.toList());
-        agents.forEach(DownloadAgent::init);
-        return agents;
-    }
-
-    public Client initClient() {
-        Client client;
+    @Bean
+    public Client getClient() {
         OkHttpClient okHttpClient = (new OkHttpClient.Builder()).pingInterval(20L, TimeUnit.SECONDS).build();
-        if ((clientConfig.getProxies() != null) && clientConfig.getProxies().size() > 0) {
-            client = new ProxyClient(okHttpClient, clientConfig.getProxies());
-            logger.info("init proxy client");
-        } else {
-            client = new SimpleClient(okHttpClient);
+        if (clientConfig.getType() == null || clientConfig.getType().equalsIgnoreCase("composite")) {
+            logger.info("init composite client");
+            CompositeClient compositeClient = new CompositeClient(okHttpClient, this.clientConfig.getProxies());
+            compositeClient.init();
+            return compositeClient;
+        } else if (clientConfig.getType().equalsIgnoreCase("simple")) {
             logger.info("init simple client");
+            SimpleClient simpleClient = new SimpleClient(okHttpClient);
+            simpleClient.init();
+            return simpleClient;
+        } else if (clientConfig.getType().equalsIgnoreCase("proxy")) {
+            logger.info("init proxy client");
+            ProxyClient proxyClient = new ProxyClient(okHttpClient, this.clientConfig.getProxies());
+            proxyClient.init();
+            return proxyClient;
+        } else {
+            throw new IllegalStateException(
+                    "pass client type parameter to application.yml. Possible values: \"composite\", \"simple\" or \"proxy\""
+            );
         }
-        client.init();
-        return client;
-    }
-
-    private Set<String> getValidSymbols(Client client) {
-        Set<String> allSymbols = client.getAllSymbols();
-        Set<String> userSymbols = clientConfig.getSymbols();
-        Set<String> diff = new HashSet<>(userSymbols);
-        diff.removeAll(allSymbols);
-        if (diff.size() == userSymbols.size()) {
-            logger.error("no valid symbols found, exit app. ValidSymbols = " + allSymbols);
-            System.exit(1);
-        } else if (diff.size() > 0) {
-            logger.warn("symbols:" + diff + "are invalid! ValidSymbols = " + allSymbols);
-        }
-        userSymbols.removeAll(diff);
-        return userSymbols;
     }
 }

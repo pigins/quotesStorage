@@ -9,8 +9,17 @@ import java.util.Set;
 @Component
 @ConfigurationProperties(prefix="client")
 public class ClientConfig {
+    private String type;
     private List<ProxySocketAddress> proxies;
     private Set<String> symbols;
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 
     public List<ProxySocketAddress> getProxies() {
         return proxies;

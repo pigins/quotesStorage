@@ -9,6 +9,7 @@ database:
   path: C:\Users\serg\.quotes_store\data
 # Client
 client:
+  type: simple
   symbols:
   - ETHTUSD
   - SNTBTC
