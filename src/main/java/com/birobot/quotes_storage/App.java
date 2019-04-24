@@ -37,10 +37,12 @@ public class App {
     private static Logger logger = LogManager.getLogger();
 
     private final ClientConfig clientConfig;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public App(ClientConfig clientConfig) {
+    public App(ClientConfig clientConfig, ObjectMapper objectMapper) {
         this.clientConfig = clientConfig;
+        this.objectMapper = objectMapper;
     }
 
     public static void main(String[] args) {
@@ -48,34 +50,17 @@ public class App {
     }
 
     @Bean
-    @Primary
-    public ObjectMapper objectMapper(Jackson2ObjectMapperBuilder builder) {
-        ObjectMapper objectMapper = builder.createXmlMapper(false).build();
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(Candle.class, new CandleDeserializer());
-        module.addSerializer(new CandleSerializer(Candle.class));
-        objectMapper.registerModule(module);
-        return objectMapper;
-    }
-
-    @Bean
     public Client getClient() {
         OkHttpClient okHttpClient = (new OkHttpClient.Builder()).pingInterval(20L, TimeUnit.SECONDS).build();
         if (clientConfig.getType() == null || clientConfig.getType().equalsIgnoreCase("composite")) {
             logger.info("init composite client");
-            CompositeClient compositeClient = new CompositeClient(okHttpClient, this.clientConfig.getProxies());
-            compositeClient.init();
-            return compositeClient;
+            return new CompositeClient(okHttpClient, this.clientConfig.getProxies(), objectMapper);
         } else if (clientConfig.getType().equalsIgnoreCase("simple")) {
             logger.info("init simple client");
-            SimpleClient simpleClient = new SimpleClient(okHttpClient);
-            simpleClient.init();
-            return simpleClient;
+            return new SimpleClient(okHttpClient, objectMapper);
         } else if (clientConfig.getType().equalsIgnoreCase("proxy")) {
             logger.info("init proxy client");
-            ProxyClient proxyClient = new ProxyClient(okHttpClient, this.clientConfig.getProxies());
-            proxyClient.init();
-            return proxyClient;
+            return new ProxyClient(okHttpClient, this.clientConfig.getProxies(), objectMapper);
         } else {
             throw new IllegalStateException(
                     "pass client type parameter to application.yml. Possible values: \"composite\", \"simple\" or \"proxy\""

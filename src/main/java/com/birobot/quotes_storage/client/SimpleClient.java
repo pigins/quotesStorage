@@ -16,31 +16,24 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- *  * If you use okhttpClient.newBuilder() to create one client from another, then each client will be very lightweight.
- *  They will share the same connection pool and dispatcher, for example. See OkHttpClient’s docs on sharing.
- */
 public class SimpleClient implements Client {
     private static Logger logger = LogManager.getLogger();
-    protected static HttpUrl BASE_URL = new HttpUrl.Builder()
+    private static HttpUrl BASE_URL = new HttpUrl.Builder()
             .scheme("https")
             .host("api.binance.com")
             .addPathSegment("api")
             .addPathSegment("v1")
             .build();
-    private static ObjectMapper mapper = new ClientObjectMapper();
-    private static JavaType candleListType = mapper.getTypeFactory().constructCollectionType(List.class, Candle.class);
-
-    private OkHttpClient okHttpClient;
+    private final JavaType candleListType;
+    private final OkHttpClient okHttpClient;
+    private final ObjectMapper mapper;
     private OffsetDateTime continueDate;
     private OffsetDateTime activeDate;
 
-    public SimpleClient(OkHttpClient okHttpClient) {
+    public SimpleClient(OkHttpClient okHttpClient, ObjectMapper mapper) {
         this.okHttpClient = okHttpClient;
-    }
-
-    @Override
-    public void init() {
+        this.mapper = mapper;
+        candleListType = mapper.getTypeFactory().constructCollectionType(List.class, Candle.class);
     }
 
     @Override
@@ -72,18 +65,18 @@ public class SimpleClient implements Client {
         return OffsetDateTime.now().isAfter(continueDate);
     }
 
-    public boolean isActive() {
+    boolean isActive() {
         if (activeDate == null) {
             return true;
         }
         return OffsetDateTime.now().isAfter(activeDate);
     }
 
-    protected String getResponse(String path, Map<String, String> queryParams) {
+    private String getResponse(String path, Map<String, String> queryParams) {
         return getResponse(okHttpClient, path, queryParams);
     }
 
-    String getResponse(OkHttpClient client, String path, Map<String, String> queryParams) {
+    private String getResponse(OkHttpClient client, String path, Map<String, String> queryParams) {
         HttpUrl.Builder urlBuilder = BASE_URL.newBuilder().addPathSegment(path);
         if (queryParams != null && !queryParams.isEmpty()) {
             queryParams.forEach(urlBuilder::addQueryParameter);
@@ -143,7 +136,4 @@ public class SimpleClient implements Client {
             throw new RuntimeException(e);
         }
     }
-
-
-
 }

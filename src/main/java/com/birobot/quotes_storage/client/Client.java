@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Set;
 
 public interface Client {
-    void init();
 
     List<Candle> getOneMinuteBars(String symbol, OffsetDateTime beginDate);
 

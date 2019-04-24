@@ -1,6 +1,7 @@
 package com.birobot.quotes_storage.client;
 
 import com.birobot.quotes_storage.config.ProxySocketAddress;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import com.birobot.quotes_storage.dto.Candle;
 import com.birobot.quotes_storage.dto.ExchangeInfo;
@@ -13,24 +14,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ProxyClient implements Client {
-    private final OkHttpClient okHttpClient;
-    private final List<ProxySocketAddress> proxySocketAddresses;
     private List<SimpleClient> clients;
 
-    public ProxyClient(OkHttpClient okHttpClient, List<ProxySocketAddress> proxySocketAddresses) {
-        this.okHttpClient = okHttpClient;
-        this.proxySocketAddresses = proxySocketAddresses;
-    }
-
-    @Override
-    public void init() {
+    public ProxyClient(OkHttpClient okHttpClient, List<ProxySocketAddress> proxySocketAddresses, ObjectMapper objectMapper) {
         clients = proxySocketAddresses
                 .stream()
                 .map(proxySocketAddress -> new InetSocketAddress(proxySocketAddress.getHost(), proxySocketAddress.getPort()))
                 .map(address -> new Proxy(Proxy.Type.HTTP, address))
                 .map(proxy -> okHttpClient.newBuilder().proxy(proxy).build())
-                .map(SimpleClient::new).collect(Collectors.toList());
-        clients.add(new SimpleClient(okHttpClient));
+                .map(i -> new SimpleClient(okHttpClient, objectMapper)).collect(Collectors.toList());
     }
 
     @Override

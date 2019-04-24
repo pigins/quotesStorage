@@ -3,6 +3,7 @@ package com.birobot.quotes_storage.client;
 import com.birobot.quotes_storage.config.ProxySocketAddress;
 import com.birobot.quotes_storage.dto.Candle;
 import com.birobot.quotes_storage.dto.ExchangeInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 
 import java.time.OffsetDateTime;
@@ -10,12 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 public class CompositeClient implements Client {
-    public CompositeClient(OkHttpClient okHttpClient, List<ProxySocketAddress> proxies) {
-
-    }
-
-    @Override
-    public void init() {
+    public CompositeClient(OkHttpClient okHttpClient, List<ProxySocketAddress> proxies, ObjectMapper objectMapper) {
 
     }
 
