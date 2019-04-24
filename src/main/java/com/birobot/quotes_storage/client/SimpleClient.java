@@ -95,6 +95,7 @@ public class SimpleClient implements Client {
             }
             return response.body().string();
         } catch (IOException e) {
+            // if proxy is dead or binance, or network connection lost
             activeDate = OffsetDateTime.now().plus(5, ChronoUnit.MINUTES);
             throw new RuntimeException(e);
         }
