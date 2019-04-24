@@ -1,4 +1,4 @@
-package com.birobot.quotes_storage.agent;
+package com.birobot.quotes_storage.download;
 
 import com.birobot.quotes_storage.client.Client;
 import com.birobot.quotes_storage.config.ClientConfig;
@@ -34,13 +34,12 @@ public class Downloader {
 
     @PostConstruct
     public void run() {
-        List<DownloadAgent> agents = initDownloadAgents(db, client);
+        List<Agent> agents = initDownloadAgents(db, client);
         runAgents(agents);
     }
 
-    private void runAgents(List<DownloadAgent> agents) {
+    private void runAgents(List<Agent> agents) {
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-        Runtime.getRuntime().addShutdownHook(new Thread(executor::shutdown));
         executor.scheduleAtFixedRate(() -> agents.forEach(agent -> {
             while (agent.needNext()) {
                 try {
@@ -52,13 +51,13 @@ public class Downloader {
         }), 0, 10, TimeUnit.MINUTES);
     }
 
-    private List<DownloadAgent> initDownloadAgents(QuotesDatabase db, Client client) {
+    private List<Agent> initDownloadAgents(QuotesDatabase db, Client client) {
         Set<String> validSymbols = getValidSymbols(client);
-        List<DownloadAgent> agents = validSymbols
+        List<Agent> agents = validSymbols
                 .stream()
-                .map(symbol -> new DownloadAgent(symbol, db, client))
+                .map(symbol -> new Agent(symbol, db, client))
                 .collect(Collectors.toList());
-        agents.forEach(DownloadAgent::init);
+        agents.forEach(Agent::init);
         return agents;
     }
 

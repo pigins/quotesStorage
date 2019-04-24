@@ -1,4 +1,4 @@
-package com.birobot.quotes_storage.agent;
+package com.birobot.quotes_storage.download;
 
 import com.birobot.quotes_storage.client.Client;
 import com.birobot.quotes_storage.dto.Candle;
@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-public class DownloadAgent {
+public class Agent {
     private static Logger logger = LogManager.getLogger();
     private final String symbol;
     private final QuotesDatabase database;
@@ -17,7 +17,7 @@ public class DownloadAgent {
     private OffsetDateTime latestClose;
     private boolean stop = false;
 
-    public DownloadAgent(String currencyPair, QuotesDatabase database, Client client) {
+    public Agent(String currencyPair, QuotesDatabase database, Client client) {
         this.symbol = currencyPair;
         this.database = database;
         this.client = client;

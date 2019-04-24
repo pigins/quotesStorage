@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 public class Controller {
 
-    final QuotesDatabase db;
+    private final QuotesDatabase db;
 
     @Autowired
     public Controller(QuotesDatabase db) {

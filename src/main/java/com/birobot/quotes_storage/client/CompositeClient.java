@@ -1,42 +1,59 @@
 package com.birobot.quotes_storage.client;
 
-import com.birobot.quotes_storage.config.ProxySocketAddress;
 import com.birobot.quotes_storage.dto.Candle;
 import com.birobot.quotes_storage.dto.ExchangeInfo;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.OkHttpClient;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 
 public class CompositeClient implements Client {
-    public CompositeClient(OkHttpClient okHttpClient, List<ProxySocketAddress> proxies, ObjectMapper objectMapper) {
+    private final ProxyClient proxyClient;
+    private final SimpleClient simpleClient;
 
+    public CompositeClient(ProxyClient proxyClient, SimpleClient simpleClient) {
+        this.proxyClient = proxyClient;
+        this.simpleClient = simpleClient;
     }
 
     @Override
     public List<Candle> getOneMinuteBars(String symbol, OffsetDateTime beginDate) {
-        return null;
+        if (proxyClient.isExhausted()) {
+            return simpleClient.getOneMinuteBars(symbol, beginDate);
+        } else {
+            return proxyClient.getOneMinuteBars(symbol, beginDate);
+        }
     }
 
     @Override
     public OffsetDateTime getDateOfFirstTrade(String symbol) {
-        return null;
+        if (proxyClient.isExhausted()) {
+            return simpleClient.getDateOfFirstTrade(symbol);
+        } else {
+            return proxyClient.getDateOfFirstTrade(symbol);
+        }
     }
 
     @Override
     public ExchangeInfo getExchangeInfo() {
-        return null;
+        if (proxyClient.isExhausted()) {
+            return simpleClient.getExchangeInfo();
+        } else {
+            return proxyClient.getExchangeInfo();
+        }
     }
 
     @Override
     public Set<String> getAllSymbols() {
-        return null;
+        if (proxyClient.isExhausted()) {
+            return simpleClient.getAllSymbols();
+        } else {
+            return proxyClient.getAllSymbols();
+        }
     }
 
     @Override
     public boolean isExhausted() {
-        return false;
+        return proxyClient.isExhausted() && simpleClient.isExhausted();
     }
 }
