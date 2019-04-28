@@ -31,8 +31,13 @@ public class ProxyClient implements Client {
     }
 
     @Override
-    public OffsetDateTime getDateOfFirstTrade(String symbol) {
-        return getAnySimpleClient().getDateOfFirstTrade(symbol);
+    public OffsetDateTime getDateOfFirstOpen(String symbol) {
+        return getAnySimpleClient().getDateOfFirstOpen(symbol);
+    }
+
+    @Override
+    public OffsetDateTime getDateOfLastClose(String symbol) {
+        return getAnySimpleClient().getDateOfLastClose(symbol);
     }
 
     @Override
@@ -46,11 +51,11 @@ public class ProxyClient implements Client {
     }
 
     @Override
-    public boolean isExhausted() {
-        return getAnySimpleClient().isExhausted();
+    public boolean isAvailable() {
+        return getAnySimpleClient().isAvailable();
     }
 
     private SimpleClient getAnySimpleClient() {
-        return clients.stream().filter(client -> client.isActive() && !client.isExhausted()).findFirst().get();
+        return clients.stream().filter(client -> !client.isAvailable()).findFirst().get();
     }
 }

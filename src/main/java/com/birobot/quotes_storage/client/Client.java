@@ -5,17 +5,20 @@ import com.birobot.quotes_storage.dto.ExchangeInfo;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface Client {
 
     List<Candle> getOneMinuteBars(String symbol, OffsetDateTime beginDate);
 
-    OffsetDateTime getDateOfFirstTrade(String symbol);
+    OffsetDateTime getDateOfFirstOpen(String symbol);
+
+    OffsetDateTime getDateOfLastClose(String symbol);
 
     ExchangeInfo getExchangeInfo();
 
     Set<String> getAllSymbols();
 
-    boolean isExhausted();
+    boolean isAvailable();
 }

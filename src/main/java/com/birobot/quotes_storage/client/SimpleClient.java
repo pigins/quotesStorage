@@ -12,12 +12,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.time.*;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class SimpleClient implements Client {
-    private static Logger logger = LogManager.getLogger();
     private static HttpUrl BASE_URL = new HttpUrl.Builder()
             .scheme("https")
             .host("api.binance.com")
@@ -27,12 +25,12 @@ public class SimpleClient implements Client {
     private final JavaType candleListType;
     private final OkHttpClient okHttpClient;
     private final ObjectMapper mapper;
-    private OffsetDateTime continueDate;
-    private OffsetDateTime activeDate;
+    private RequestLimit requestLimit;
 
     public SimpleClient(OkHttpClient okHttpClient, ObjectMapper mapper) {
         this.okHttpClient = okHttpClient;
         this.mapper = mapper;
+        requestLimit = new RequestLimit();
         candleListType = mapper.getTypeFactory().constructCollectionType(List.class, Candle.class);
     }
 
@@ -42,9 +40,15 @@ public class SimpleClient implements Client {
     }
 
     @Override
-    public OffsetDateTime getDateOfFirstTrade(String symbol) {
+    public OffsetDateTime getDateOfFirstOpen(String symbol) {
         List<Candle> candlestickBars = getCandlestickBars(symbol, CandlestickInterval.MONTHLY);
         return candlestickBars.get(0).getOpenTime();
+    }
+
+    @Override
+    public OffsetDateTime getDateOfLastClose(String symbol) {
+        List<Candle> candlestickBars = getCandlestickBars(symbol, CandlestickInterval.MONTHLY);
+        return candlestickBars.get(candlestickBars.size() - 1).getCloseTime();
     }
 
     @Override
@@ -58,47 +62,8 @@ public class SimpleClient implements Client {
     }
 
     @Override
-    public boolean isExhausted() {
-        if (continueDate == null) {
-            return false;
-        }
-        return OffsetDateTime.now().isAfter(continueDate);
-    }
-
-    boolean isActive() {
-        if (activeDate == null) {
-            return true;
-        }
-        return OffsetDateTime.now().isAfter(activeDate);
-    }
-
-    private String getResponse(String path, Map<String, String> queryParams) {
-        return getResponse(okHttpClient, path, queryParams);
-    }
-
-    private String getResponse(OkHttpClient client, String path, Map<String, String> queryParams) {
-        HttpUrl.Builder urlBuilder = BASE_URL.newBuilder().addPathSegment(path);
-        if (queryParams != null && !queryParams.isEmpty()) {
-            queryParams.forEach(urlBuilder::addQueryParameter);
-        }
-        HttpUrl url = urlBuilder.build();
-        Request request = new Request.Builder().get().url(url).build();
-        try (Response response = client.newCall(request).execute()) {
-            if (response.code() == 429 || response.code() == 418) {
-                int secondsBeforeCanContinue = Integer.valueOf(Objects.requireNonNull(response.header("Retry-After")));
-                continueDate = OffsetDateTime.now().plus(secondsBeforeCanContinue, ChronoUnit.SECONDS);
-                logger.info(
-                        "{} exhausted, continue date is {}",
-                        okHttpClient.proxy() != null ? "proxy " + okHttpClient.proxy().address() : "local ip address",
-                        continueDate
-                );
-            }
-            return response.body().string();
-        } catch (IOException e) {
-            // if proxy is dead or binance, or network connection lost
-            activeDate = OffsetDateTime.now().plus(5, ChronoUnit.MINUTES);
-            throw new RuntimeException(e);
-        }
+    public boolean isAvailable() {
+        return !requestLimit.forbid();
     }
 
     private List<Candle> getCandlestickBars(String symbol, CandlestickInterval candlestickInterval) {
@@ -106,7 +71,7 @@ public class SimpleClient implements Client {
     }
 
     private List<Candle> getCandlestickBars(String symbol, CandlestickInterval candlestickInterval, Integer limit,
-                                                 Long startTime, Long endTime) {
+                                            Long startTime, Long endTime) {
         Map<String, String> params = new HashMap<>();
         params.put("symbol", symbol);
         params.put("interval", candlestickInterval.getIntervalId());
@@ -134,6 +99,36 @@ public class SimpleClient implements Client {
         try {
             return mapper.readValue(res, clazz);
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String getResponse(String path, Map<String, String> queryParams) {
+        if (requestLimit.forbid()) {
+            throw new RuntimeException(requestLimit.getReason());
+        }
+        HttpUrl.Builder urlBuilder = BASE_URL.newBuilder().addPathSegment(path);
+        if (queryParams != null && !queryParams.isEmpty()) {
+            queryParams.forEach(urlBuilder::addQueryParameter);
+        }
+        HttpUrl url = urlBuilder.build();
+        Request request = new Request.Builder().get().url(url).build();
+        try (Response response = okHttpClient.newCall(request).execute()) {
+            if (response.code() == 429 || response.code() == 418) {
+                int secondsBeforeCanContinue = Integer.valueOf(Objects.requireNonNull(response.header("Retry-After")));
+                requestLimit.setExhausted(secondsBeforeCanContinue);
+                String message = String.format(
+                        "%s exhausted, continue date is %s",
+                        okHttpClient.proxy() != null ? "proxy " + Objects.requireNonNull(okHttpClient.proxy()).address() : "local ip address",
+                        requestLimit.getCanUseLimitAgainDate()
+                );
+                throw new RuntimeException(message);
+            }
+            String result = Objects.requireNonNull(response.body()).string();
+            requestLimit.setOkRequest();
+            return result;
+        } catch (IOException e) {
+            requestLimit.setNoConnection();
             throw new RuntimeException(e);
         }
     }

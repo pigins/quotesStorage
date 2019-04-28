@@ -18,7 +18,7 @@ public class CompositeClient implements Client {
 
     @Override
     public List<Candle> getOneMinuteBars(String symbol, OffsetDateTime beginDate) {
-        if (proxyClient.isExhausted()) {
+        if (proxyClient.isAvailable()) {
             return simpleClient.getOneMinuteBars(symbol, beginDate);
         } else {
             return proxyClient.getOneMinuteBars(symbol, beginDate);
@@ -26,17 +26,26 @@ public class CompositeClient implements Client {
     }
 
     @Override
-    public OffsetDateTime getDateOfFirstTrade(String symbol) {
-        if (proxyClient.isExhausted()) {
-            return simpleClient.getDateOfFirstTrade(symbol);
+    public OffsetDateTime getDateOfFirstOpen(String symbol) {
+        if (proxyClient.isAvailable()) {
+            return simpleClient.getDateOfFirstOpen(symbol);
         } else {
-            return proxyClient.getDateOfFirstTrade(symbol);
+            return proxyClient.getDateOfFirstOpen(symbol);
+        }
+    }
+
+    @Override
+    public OffsetDateTime getDateOfLastClose(String symbol) {
+        if (proxyClient.isAvailable()) {
+            return simpleClient.getDateOfLastClose(symbol);
+        } else {
+            return proxyClient.getDateOfLastClose(symbol);
         }
     }
 
     @Override
     public ExchangeInfo getExchangeInfo() {
-        if (proxyClient.isExhausted()) {
+        if (proxyClient.isAvailable()) {
             return simpleClient.getExchangeInfo();
         } else {
             return proxyClient.getExchangeInfo();
@@ -45,7 +54,7 @@ public class CompositeClient implements Client {
 
     @Override
     public Set<String> getAllSymbols() {
-        if (proxyClient.isExhausted()) {
+        if (proxyClient.isAvailable()) {
             return simpleClient.getAllSymbols();
         } else {
             return proxyClient.getAllSymbols();
@@ -53,7 +62,7 @@ public class CompositeClient implements Client {
     }
 
     @Override
-    public boolean isExhausted() {
-        return proxyClient.isExhausted() && simpleClient.isExhausted();
+    public boolean isAvailable() {
+        return proxyClient.isAvailable() && simpleClient.isAvailable();
     }
 }

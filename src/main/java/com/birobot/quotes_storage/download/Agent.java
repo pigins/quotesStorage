@@ -7,32 +7,51 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-public class Agent {
+class Agent {
     private static Logger logger = LogManager.getLogger();
     private final String symbol;
     private final QuotesDatabase database;
     private final Client client;
     private OffsetDateTime latestClose;
-    private boolean stop = false;
+    private boolean symbolDelisted = false;
+    private OffsetDateTime dateOfLastTrade;
+    private OffsetDateTime continueDate = OffsetDateTime.MIN;
 
-    public Agent(String currencyPair, QuotesDatabase database, Client client) {
-        this.symbol = currencyPair;
+    Agent(String symbol, QuotesDatabase database, Client client) {
+        this.symbol = symbol;
         this.database = database;
         this.client = client;
     }
 
-    public void init() {
-        database.createQuotesTableIfNotExist(symbol);
-        OffsetDateTime beginDate = database.getLatestCloseDate(symbol);
-        if (beginDate == null) {
-            beginDate = client.getDateOfFirstTrade(symbol);
+    void init() {
+        OffsetDateTime beginDate;
+        if (!database.symbolExist(symbol)) {
+            beginDate = client.getDateOfFirstOpen(symbol);
+            database.createQuotesTableIfNotExist(symbol);
+        } else {
+            beginDate = database.getLatestCloseDate(symbol);
         }
         latestClose = beginDate;
     }
 
-    public void downloadNext() {
+    boolean needNext() {
+        OffsetDateTime now = OffsetDateTime.now();
+        if (client.isAvailable() && now.isAfter(continueDate)) {
+            if (symbolDelisted && latestClose.isBefore(dateOfLastTrade)) {
+                return true;
+            }
+            if (!symbolDelisted) {
+                return now.minusMinutes(15).isAfter(latestClose);
+//                return now.minusHours(15).isAfter(latestClose);
+            }
+        }
+        return false;
+    }
+
+    void downloadNext() {
         List<Candle> oneMinuteBars = client.getOneMinuteBars(symbol, latestClose);
         logger.info("received {} bars for {} and latest close {} ", oneMinuteBars.size(), symbol, latestClose);
         if (oneMinuteBars.size() != 0) {
@@ -40,12 +59,16 @@ public class Agent {
             Candle lastCandle = oneMinuteBars.get(oneMinuteBars.size() - 1);
             latestClose = lastCandle.getCloseTime();
         } else {
-            stop = true;
+            continueDate = OffsetDateTime.now().plus(10, ChronoUnit.MINUTES);
         }
     }
 
-    public boolean needNext() {
-        OffsetDateTime current = OffsetDateTime.now();
-        return !stop && current.minusHours(15).isAfter(latestClose);
+    void setSymbolDelisted() {
+        this.symbolDelisted = true;
+        this.dateOfLastTrade = client.getDateOfLastClose(symbol);
+    }
+
+    public String getSymbol() {
+        return symbol;
     }
 }

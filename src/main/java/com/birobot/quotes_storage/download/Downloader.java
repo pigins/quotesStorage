@@ -3,15 +3,15 @@ package com.birobot.quotes_storage.download;
 import com.birobot.quotes_storage.client.Client;
 import com.birobot.quotes_storage.config.ClientConfig;
 import com.birobot.quotes_storage.database.QuotesDatabase;
+import com.birobot.quotes_storage.dto.SymbolInfo;
+import com.birobot.quotes_storage.dto.SymbolStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +24,8 @@ public class Downloader {
     private final QuotesDatabase db;
     private final Client client;
     private final ClientConfig clientConfig;
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+    private List<Agent> agents;
 
     @Autowired
     public Downloader(QuotesDatabase db, Client client, ClientConfig clientConfig) {
@@ -34,12 +36,16 @@ public class Downloader {
 
     @PostConstruct
     public void run() {
-        List<Agent> agents = initDownloadAgents(db, client);
-        runAgents(agents);
+        initAgents();
+        runAgents();
+        runCheckForDelistedSymbols();
     }
 
-    private void runAgents(List<Agent> agents) {
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+    private void runCheckForDelistedSymbols() {
+        executor.scheduleAtFixedRate(this::findDelisted, 0, 1, TimeUnit.HOURS);
+    }
+
+    private void runAgents() {
         executor.scheduleAtFixedRate(() -> agents.forEach(agent -> {
             while (agent.needNext()) {
                 try {
@@ -51,28 +57,27 @@ public class Downloader {
         }), 0, 10, TimeUnit.MINUTES);
     }
 
-    private List<Agent> initDownloadAgents(QuotesDatabase db, Client client) {
-        Set<String> validSymbols = getValidSymbols(client);
-        List<Agent> agents = validSymbols
+    private void initAgents() {
+        agents = clientConfig.getSymbols()
                 .stream()
                 .map(symbol -> new Agent(symbol, db, client))
                 .collect(Collectors.toList());
         agents.forEach(Agent::init);
-        return agents;
+        findDelisted();
     }
 
-    private Set<String> getValidSymbols(Client client) {
-        Set<String> allSymbols = client.getAllSymbols();
-        Set<String> userSymbols = clientConfig.getSymbols();
-        Set<String> diff = new HashSet<>(userSymbols);
-        diff.removeAll(allSymbols);
-        if (diff.size() == userSymbols.size()) {
-            logger.error("no valid symbols found, exit app. ValidSymbols = " + allSymbols);
-            System.exit(1);
-        } else if (diff.size() > 0) {
-            logger.warn("symbols:" + diff + "are invalid! ValidSymbols = " + allSymbols);
-        }
-        userSymbols.removeAll(diff);
-        return userSymbols;
+    private void findDelisted() {
+        List<String> delisted = client.getExchangeInfo().getSymbols().stream()
+                .filter(
+                        symbolInfo -> symbolInfo.getStatus() == SymbolStatus.BREAK &&
+                                clientConfig.getSymbols().contains(symbolInfo.getSymbol())
+                ).map(SymbolInfo::getSymbol)
+                .collect(Collectors.toList());
+
+        agents.forEach(agent -> {
+            if (delisted.contains(agent.getSymbol())) {
+                agent.setSymbolDelisted();
+            }
+        });
     }
 }
