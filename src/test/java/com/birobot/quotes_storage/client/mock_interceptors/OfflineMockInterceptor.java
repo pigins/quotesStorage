@@ -1,4 +1,4 @@
-package com.birobot.quotes_storage.client;
+package com.birobot.quotes_storage.client.mock_interceptors;
 
 import okhttp3.*;
 

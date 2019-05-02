@@ -1,16 +1,18 @@
 package com.birobot.quotes_storage.client;
 
 import com.birobot.quotes_storage.ObjectMapperConfig;
+import com.birobot.quotes_storage.client.mock_interceptors.OfflineMockInterceptor;
+import com.birobot.quotes_storage.client.mock_interceptors.ThrowIoExInterceptor;
 import com.birobot.quotes_storage.dto.ExchangeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +24,8 @@ import static org.testng.Assert.*;
 public class SimpleClientTest extends AbstractTestNGSpringContextTests {
     private Client client;
 
-    @Autowired ObjectMapper objectMapper;
+    @Autowired
+    ObjectMapper objectMapper;
 
     @BeforeMethod
     public void setUp() {
@@ -30,19 +33,31 @@ public class SimpleClientTest extends AbstractTestNGSpringContextTests {
         client = new SimpleClient(okHttpClient, objectMapper);
     }
 
-    private OkHttpClient getMockClientThrows429() {
+    @Test
+    public void testExhausted() throws InterruptedException {
         Map<String, String> headers = new HashMap<>();
-        headers.put("Retry-After", String.valueOf(1000));
-        return new OkHttpClient.Builder()
+        headers.put("Retry-After", String.valueOf(2));
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .addInterceptor(new OfflineMockInterceptor(429, "", headers))
                 .build();
+        client = new SimpleClient(okHttpClient, objectMapper);
+        assertThrows(RuntimeException.class, () -> client.getAllSymbols());
+        assertFalse(client.isAvailable());
+        Thread.sleep(2000);
+        assertTrue(client.isAvailable());
     }
 
     @Test
-    public void testBlocked() {
-        client = new SimpleClient(getMockClientThrows429(), objectMapper);
-        assertThrows(RuntimeException.class, ()-> client.getAllSymbols());
-        assertFalse(client.isAvailable());
+    public void testNoConnection() throws InterruptedException {
+        client = new SimpleClient(new OkHttpClient.Builder().addInterceptor(new ThrowIoExInterceptor()).build(), objectMapper);
+        RequestLimit requestLimit = new RequestLimit(1);
+        ReflectionTestUtils.setField(client, "requestLimit", requestLimit);
+        for (int i = 1; i <= 32; i *= 2) {
+            assertThrows(RuntimeException.class, () -> client.getAllSymbols());
+            assertFalse(client.isAvailable());
+            Thread.sleep(i * 1000);
+            assertTrue(client.isAvailable());
+        }
     }
 
     @Test
@@ -63,7 +78,7 @@ public class SimpleClientTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void delisted() {
-        String delistedPair = "BCNETH";
-        System.out.println(client.getExchangeInfo().getSymbols().stream().filter(s -> s.getSymbol().equals("BCNETH")).findFirst().get().getStatus());
+        System.out.println(client.getExchangeInfo().getSymbols().stream().filter(s -> s.getSymbol().equals("BCNETH"))
+                .findFirst().get().getStatus());
     }
 }

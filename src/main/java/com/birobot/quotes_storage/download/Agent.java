@@ -44,8 +44,8 @@ class Agent {
                 return true;
             }
             if (!symbolDelisted) {
-                return now.minusMinutes(15).isAfter(latestClose);
-//                return now.minusHours(15).isAfter(latestClose);
+//                return now.minusMinutes(15).isAfter(latestClose);
+                return now.minusHours(15).isAfter(latestClose);
             }
         }
         return false;
@@ -63,7 +63,7 @@ class Agent {
         }
     }
 
-    void setSymbolDelisted() {
+    synchronized void setSymbolDelisted() {
         this.symbolDelisted = true;
         this.dateOfLastTrade = client.getDateOfLastClose(symbol);
     }

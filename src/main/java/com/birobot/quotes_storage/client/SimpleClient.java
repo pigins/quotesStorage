@@ -7,8 +7,6 @@ import com.birobot.quotes_storage.dto.SymbolInfo;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.time.*;
@@ -30,13 +28,19 @@ public class SimpleClient implements Client {
     public SimpleClient(OkHttpClient okHttpClient, ObjectMapper mapper) {
         this.okHttpClient = okHttpClient;
         this.mapper = mapper;
-        requestLimit = new RequestLimit();
+        requestLimit = new RequestLimit(300);
         candleListType = mapper.getTypeFactory().constructCollectionType(List.class, Candle.class);
     }
 
     @Override
     public List<Candle> getOneMinuteBars(String symbol, OffsetDateTime beginDate) {
-        return getCandlestickBars(symbol, CandlestickInterval.ONE_MINUTE, 1000, beginDate.toEpochSecond() * 1000, null);
+        return getCandlestickBars(
+                symbol,
+                CandlestickInterval.ONE_MINUTE,
+                1000,
+                beginDate.toEpochSecond() * 1000,
+                null
+        );
     }
 
     @Override
@@ -63,7 +67,7 @@ public class SimpleClient implements Client {
 
     @Override
     public boolean isAvailable() {
-        return !requestLimit.forbid();
+        return !requestLimit.getForbidden();
     }
 
     private List<Candle> getCandlestickBars(String symbol, CandlestickInterval candlestickInterval) {
@@ -104,7 +108,7 @@ public class SimpleClient implements Client {
     }
 
     private String getResponse(String path, Map<String, String> queryParams) {
-        if (requestLimit.forbid()) {
+        if (requestLimit.getForbidden()) {
             throw new RuntimeException(requestLimit.getReason());
         }
         HttpUrl.Builder urlBuilder = BASE_URL.newBuilder().addPathSegment(path);
@@ -122,14 +126,14 @@ public class SimpleClient implements Client {
                         okHttpClient.proxy() != null ? "proxy " + Objects.requireNonNull(okHttpClient.proxy()).address() : "local ip address",
                         requestLimit.getCanUseLimitAgainDate()
                 );
-                throw new RuntimeException(message);
+                throw new ClientException(message);
             }
             String result = Objects.requireNonNull(response.body()).string();
             requestLimit.setOkRequest();
             return result;
         } catch (IOException e) {
             requestLimit.setNoConnection();
-            throw new RuntimeException(e);
+            throw new ClientException(e);
         }
     }
 }

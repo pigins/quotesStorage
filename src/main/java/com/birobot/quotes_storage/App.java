@@ -1,6 +1,5 @@
 package com.birobot.quotes_storage;
 
-import com.birobot.quotes_storage.client.CompositeClient;
 import com.birobot.quotes_storage.client.Client;
 import com.birobot.quotes_storage.client.ProxyClient;
 import com.birobot.quotes_storage.config.ClientConfig;
@@ -36,13 +35,7 @@ public class App {
     @Bean
     public Client getClient() {
         OkHttpClient okHttpClient = (new OkHttpClient.Builder()).pingInterval(20L, TimeUnit.SECONDS).build();
-        if (clientConfig.getType() == null || clientConfig.getType().equalsIgnoreCase("composite")) {
-            logger.info("init composite client");
-            return new CompositeClient(
-                    new ProxyClient(okHttpClient, this.clientConfig.getProxies(), objectMapper),
-                    new SimpleClient(okHttpClient, objectMapper)
-            );
-        } else if (clientConfig.getType().equalsIgnoreCase("simple")) {
+        if (clientConfig.getType() == null || clientConfig.getType().equalsIgnoreCase("simple")) {
             logger.info("init simple client");
             return new SimpleClient(okHttpClient, objectMapper);
         } else if (clientConfig.getType().equalsIgnoreCase("proxy")) {
@@ -50,7 +43,7 @@ public class App {
             return new ProxyClient(okHttpClient, this.clientConfig.getProxies(), objectMapper);
         } else {
             throw new IllegalStateException(
-                    "pass client type parameter to application.yml. Possible values: \"composite\", \"simple\" or \"proxy\""
+                    "pass client type parameter to application.yml. Possible values: \"simple\" or \"proxy\""
             );
         }
     }

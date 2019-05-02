@@ -11,6 +11,8 @@ import java.net.Proxy;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ProxyClient implements Client {
@@ -27,35 +29,48 @@ public class ProxyClient implements Client {
 
     @Override
     public List<Candle> getOneMinuteBars(String symbol, OffsetDateTime beginDate) {
-        return getAnySimpleClient().getOneMinuteBars(symbol, beginDate);
+        return getRecursive(anyClient -> anyClient.getOneMinuteBars(symbol, beginDate));
     }
 
     @Override
     public OffsetDateTime getDateOfFirstOpen(String symbol) {
-        return getAnySimpleClient().getDateOfFirstOpen(symbol);
+        return getRecursive(anyClient -> anyClient.getDateOfFirstOpen(symbol));
     }
 
     @Override
     public OffsetDateTime getDateOfLastClose(String symbol) {
-        return getAnySimpleClient().getDateOfLastClose(symbol);
+        return getRecursive(anyClient -> anyClient.getDateOfLastClose(symbol));
     }
 
     @Override
     public ExchangeInfo getExchangeInfo() {
-        return getAnySimpleClient().getExchangeInfo();
+        return getRecursive(SimpleClient::getExchangeInfo);
     }
 
     @Override
     public Set<String> getAllSymbols() {
-        return getAnySimpleClient().getAllSymbols();
+        return getRecursive(SimpleClient::getAllSymbols);
     }
 
     @Override
     public boolean isAvailable() {
-        return getAnySimpleClient().isAvailable();
+        return clients.stream().anyMatch(SimpleClient::isAvailable);
     }
 
     private SimpleClient getAnySimpleClient() {
-        return clients.stream().filter(client -> !client.isAvailable()).findFirst().get();
+        return clients.stream().filter(SimpleClient::isAvailable).findFirst().orElse(null);
+    }
+
+    private <T> T getRecursive(Function<SimpleClient, T> function) {
+        SimpleClient anySimpleClient = getAnySimpleClient();
+        if (anySimpleClient == null) {
+            throw new RuntimeException("all proxies are not available");
+        } else {
+            try {
+                return function.apply(anySimpleClient);
+            } catch (ClientException e) {
+                return getRecursive(function);
+            }
+        }
     }
 }

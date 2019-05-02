@@ -1,28 +1,47 @@
 package com.birobot.quotes_storage.client;
 
+import com.birobot.quotes_storage.ObjectMapperConfig;
+import com.birobot.quotes_storage.client.mock_interceptors.OfflineMockInterceptor;
+import com.birobot.quotes_storage.client.mock_interceptors.ThrowIoExInterceptor;
+import com.birobot.quotes_storage.config.ProxySocketAddress;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import com.birobot.quotes_storage.config.ProxySocketAddress;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static org.testng.Assert.*;
+@SpringBootTest(classes = ObjectMapperConfig.class)
+public class ProxyClientTest extends AbstractTestNGSpringContextTests {
 
-public class ProxyClientTest {
-    private Client client;
-
-    @BeforeClass
-    public void setUp() {
-        OkHttpClient okHttpClient = (new okhttp3.OkHttpClient.Builder()).pingInterval(20L, TimeUnit.SECONDS).build();
-        ProxySocketAddress proxySocketAddress = new ProxySocketAddress("190.8.168.252", 8080);
-        client = new ProxyClient(okHttpClient, List.of(proxySocketAddress), new ObjectMapper());
-    }
+    @Autowired
+    ObjectMapper objectMapper;
 
     @Test
-    public void testGetResponse() {
-        assertNotNull(client.getExchangeInfo());
+    public void testUseAnyAvailableClient() {
+        // если клиент выбросил exception патаемся взять другой
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .addInterceptor(new ThrowIoExInterceptor())
+                .build();
+        SimpleClient invalidClient = new SimpleClient(okHttpClient, objectMapper);
+        OkHttpClient okHttpClient1 = new OkHttpClient.Builder()
+                .addInterceptor(new OfflineMockInterceptor(200, "[]"))
+                .build();
+        SimpleClient okClient = new SimpleClient(okHttpClient1, objectMapper);
+
+        Client client = new ProxyClient(okHttpClient, List.of(), objectMapper);
+
+        List<SimpleClient> clients = List.of(invalidClient, okClient);
+        ReflectionTestUtils.setField(client, "clients", clients);
+        Assert.assertThrows(RuntimeException.class, client::getExchangeInfo);
+        Assert.assertFalse(invalidClient.isAvailable());
+        Assert.assertTrue(okClient.isAvailable());
     }
 }
