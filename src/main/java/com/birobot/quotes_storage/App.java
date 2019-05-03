@@ -2,12 +2,12 @@ package com.birobot.quotes_storage;
 
 import com.birobot.quotes_storage.client.Client;
 import com.birobot.quotes_storage.client.ProxyClient;
+import com.birobot.quotes_storage.client.SimpleClient;
 import com.birobot.quotes_storage.config.ClientConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.birobot.quotes_storage.client.SimpleClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

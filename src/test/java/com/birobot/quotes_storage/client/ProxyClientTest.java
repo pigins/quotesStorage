@@ -3,20 +3,16 @@ package com.birobot.quotes_storage.client;
 import com.birobot.quotes_storage.ObjectMapperConfig;
 import com.birobot.quotes_storage.client.mock_interceptors.OfflineMockInterceptor;
 import com.birobot.quotes_storage.client.mock_interceptors.ThrowIoExInterceptor;
-import com.birobot.quotes_storage.config.ProxySocketAddress;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @SpringBootTest(classes = ObjectMapperConfig.class)
 public class ProxyClientTest extends AbstractTestNGSpringContextTests {

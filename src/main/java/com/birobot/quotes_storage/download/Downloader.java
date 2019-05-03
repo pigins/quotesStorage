@@ -60,7 +60,7 @@ public class Downloader {
     private void initAgents() {
         agents = clientConfig.getSymbols()
                 .stream()
-                .map(symbol -> new Agent(symbol, db, client))
+                .map(symbol -> new Agent(symbol, db, client, new AgentParams(15, 10 * 60)))
                 .collect(Collectors.toList());
         agents.forEach(Agent::init);
         findDelisted();

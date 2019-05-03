@@ -1,17 +1,16 @@
 package com.birobot.quotes_storage.client;
 
 import com.birobot.quotes_storage.config.ProxySocketAddress;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.OkHttpClient;
 import com.birobot.quotes_storage.dto.Candle;
 import com.birobot.quotes_storage.dto.ExchangeInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.OkHttpClient;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 

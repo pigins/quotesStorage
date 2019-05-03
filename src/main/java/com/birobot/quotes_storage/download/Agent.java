@@ -1,8 +1,8 @@
 package com.birobot.quotes_storage.download;
 
 import com.birobot.quotes_storage.client.Client;
-import com.birobot.quotes_storage.dto.Candle;
 import com.birobot.quotes_storage.database.QuotesDatabase;
+import com.birobot.quotes_storage.dto.Candle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,15 +15,17 @@ class Agent {
     private final String symbol;
     private final QuotesDatabase database;
     private final Client client;
+    private final AgentParams agentParams;
     private OffsetDateTime latestClose;
     private boolean symbolDelisted = false;
     private OffsetDateTime dateOfLastTrade;
     private OffsetDateTime continueDate = OffsetDateTime.MIN;
 
-    Agent(String symbol, QuotesDatabase database, Client client) {
+    Agent(String symbol, QuotesDatabase database, Client client, AgentParams agentParams) {
         this.symbol = symbol;
         this.database = database;
         this.client = client;
+        this.agentParams = agentParams;
     }
 
     void init() {
@@ -44,11 +46,15 @@ class Agent {
                 return true;
             }
             if (!symbolDelisted) {
-//                return now.minusMinutes(15).isAfter(latestClose);
-                return now.minusHours(15).isAfter(latestClose);
+                return now.minusHours(agentParams.getHoursNextTime()).isAfter(latestClose);
             }
         }
         return false;
+    }
+
+    void setSymbolDelisted() {
+        this.dateOfLastTrade = client.getDateOfLastClose(symbol);
+        this.symbolDelisted = true;
     }
 
     void downloadNext() {
@@ -59,13 +65,8 @@ class Agent {
             Candle lastCandle = oneMinuteBars.get(oneMinuteBars.size() - 1);
             latestClose = lastCandle.getCloseTime();
         } else {
-            continueDate = OffsetDateTime.now().plus(10, ChronoUnit.MINUTES);
+            continueDate = OffsetDateTime.now().plus(agentParams.getSecondsPeriodAfterEmptyResult(), ChronoUnit.SECONDS);
         }
-    }
-
-    synchronized void setSymbolDelisted() {
-        this.symbolDelisted = true;
-        this.dateOfLastTrade = client.getDateOfLastClose(symbol);
     }
 
     public String getSymbol() {

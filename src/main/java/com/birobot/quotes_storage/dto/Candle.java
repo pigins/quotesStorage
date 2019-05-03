@@ -1,6 +1,6 @@
 package com.birobot.quotes_storage.dto;
 
-import java.time.*;
+import java.time.OffsetDateTime;
 
 public class Candle {
     private OffsetDateTime openTime;

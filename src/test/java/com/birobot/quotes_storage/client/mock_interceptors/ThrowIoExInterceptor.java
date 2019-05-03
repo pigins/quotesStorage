@@ -1,6 +1,7 @@
 package com.birobot.quotes_storage.client.mock_interceptors;
 
-import okhttp3.*;
+import okhttp3.Interceptor;
+import okhttp3.Response;
 
 import java.io.IOException;
 

@@ -1,15 +1,13 @@
 package com.birobot.quotes_storage.database;
 
-import com.birobot.quotes_storage.dto.Candle;
 import com.birobot.quotes_storage.config.DatabaseConfig;
+import com.birobot.quotes_storage.dto.Candle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hsqldb.jdbc.JDBCPool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementSetter;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
