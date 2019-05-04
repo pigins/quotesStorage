@@ -8,6 +8,7 @@ import org.hsqldb.jdbc.JDBCPool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -100,27 +101,49 @@ public class QuotesDatabase {
     }
 
     public List<Candle> getKlines(String symbol, OffsetDateTime begin, OffsetDateTime end, Integer limit) {
-        return template.query(
-                String.format("SELECT * FROM %s WHERE OPEN_TIME >= ? AND CLOSE_TIME <= ? ORDER BY OPEN_TIME DESC LIMIT ?", symbol),
-                preparedStatement -> {
-                    preparedStatement.setObject(1, begin);
-                    preparedStatement.setObject(2, end);
-                    preparedStatement.setInt(3, limit);
-                }, (rs, i) -> {
-                    Candle candle = new Candle();
-                    candle.setOpenTime((OffsetDateTime) rs.getObject(1));
-                    candle.setOpen(rs.getDouble(2));
-                    candle.setHigh(rs.getDouble(3));
-                    candle.setLow(rs.getDouble(4));
-                    candle.setClose(rs.getDouble(5));
-                    candle.setVolume(rs.getDouble(6));
-                    candle.setCloseTime((OffsetDateTime) rs.getObject(7));
-                    candle.setQuoteAssetVolume(rs.getDouble(8));
-                    candle.setNumberOfTrades(rs.getInt(9));
-                    candle.setTakerBuyBaseAssetVolume(rs.getDouble(10));
-                    candle.setTakerBuyQuoteAssetVolume(rs.getDouble(11));
-                    return candle;
-                });
+        RowMapper<Candle> candleRowMapper = (rs, i) -> {
+            Candle candle = new Candle();
+            candle.setOpenTime((OffsetDateTime) rs.getObject(1));
+            candle.setOpen(rs.getDouble(2));
+            candle.setHigh(rs.getDouble(3));
+            candle.setLow(rs.getDouble(4));
+            candle.setClose(rs.getDouble(5));
+            candle.setVolume(rs.getDouble(6));
+            candle.setCloseTime((OffsetDateTime) rs.getObject(7));
+            candle.setQuoteAssetVolume(rs.getDouble(8));
+            candle.setNumberOfTrades(rs.getInt(9));
+            candle.setTakerBuyBaseAssetVolume(rs.getDouble(10));
+            candle.setTakerBuyQuoteAssetVolume(rs.getDouble(11));
+            return candle;
+        };
+        if (begin == null && end == null) {
+            return template.query(
+                    String.format("SELECT * FROM %s ORDER BY OPEN_TIME DESC LIMIT ?", symbol),
+                    preparedStatement -> preparedStatement.setInt(1, limit), candleRowMapper
+            );
+        } else if (begin != null && end == null) {
+            return template.query(
+                    String.format("SELECT * FROM %s WHERE OPEN_TIME >= ? ORDER BY OPEN_TIME DESC LIMIT ?", symbol),
+                    preparedStatement -> {
+                        preparedStatement.setObject(1, begin);
+                        preparedStatement.setInt(2, limit);
+                    }, candleRowMapper);
+        } else if (begin == null) {
+            return template.query(
+                    String.format("SELECT * FROM %s WHERE CLOSE_TIME <= ? ORDER BY OPEN_TIME DESC LIMIT ?", symbol),
+                    preparedStatement -> {
+                        preparedStatement.setObject(1, end);
+                        preparedStatement.setInt(2, limit);
+                    }, candleRowMapper);
+        } else {
+            return template.query(
+                    String.format("SELECT * FROM %s WHERE OPEN_TIME >= ? AND CLOSE_TIME <= ? ORDER BY OPEN_TIME DESC LIMIT ?", symbol),
+                    preparedStatement -> {
+                        preparedStatement.setObject(1, begin);
+                        preparedStatement.setObject(2, end);
+                        preparedStatement.setInt(3, limit);
+                    }, candleRowMapper);
+        }
     }
 
     public boolean symbolExist(String symbol) {

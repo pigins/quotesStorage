@@ -2,15 +2,13 @@
 server:
   port: 8080
 logging:
-  path: C:\Users\serg\Desktop\quotesStorage\logs
+  path: ${user.home}\.quotes_store\logs
 # Database
 database:
   schema-name: QUOTES
-  path: C:\Users\serg\.quotes_store\data
+  path: ${user.home}\.quotes_store\data
 # Client
 client:
   type: simple
   symbols:
-  - ETHTUSD
-  - SNTBTC
-  - BCNETH
+  - BTCUSDT
