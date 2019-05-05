@@ -1,19 +1,20 @@
 package com.birobot.quotes_storage.dto;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public class Candle {
     private OffsetDateTime openTime;
-    private double open;
-    private double high;
-    private double low;
-    private double close;
-    private double volume;
+    private BigDecimal open;
+    private BigDecimal high;
+    private BigDecimal low;
+    private BigDecimal close;
+    private BigDecimal volume;
     private OffsetDateTime closeTime;
-    private double quoteAssetVolume;
+    private BigDecimal quoteAssetVolume;
     private long numberOfTrades;
-    private double takerBuyBaseAssetVolume;
-    private double takerBuyQuoteAssetVolume;
+    private BigDecimal takerBuyBaseAssetVolume;
+    private BigDecimal takerBuyQuoteAssetVolume;
 
     public OffsetDateTime getOpenTime() {
         return openTime;
@@ -23,43 +24,43 @@ public class Candle {
         this.openTime = openTime;
     }
 
-    public double getOpen() {
+    public BigDecimal getOpen() {
         return open;
     }
 
-    public void setOpen(double open) {
+    public void setOpen(BigDecimal open) {
         this.open = open;
     }
 
-    public double getHigh() {
+    public BigDecimal getHigh() {
         return high;
     }
 
-    public void setHigh(double high) {
+    public void setHigh(BigDecimal high) {
         this.high = high;
     }
 
-    public double getLow() {
+    public BigDecimal getLow() {
         return low;
     }
 
-    public void setLow(double low) {
+    public void setLow(BigDecimal low) {
         this.low = low;
     }
 
-    public double getClose() {
+    public BigDecimal getClose() {
         return close;
     }
 
-    public void setClose(double close) {
+    public void setClose(BigDecimal close) {
         this.close = close;
     }
 
-    public double getVolume() {
+    public BigDecimal getVolume() {
         return volume;
     }
 
-    public void setVolume(double volume) {
+    public void setVolume(BigDecimal volume) {
         this.volume = volume;
     }
 
@@ -71,11 +72,11 @@ public class Candle {
         this.closeTime = closeTime;
     }
 
-    public double getQuoteAssetVolume() {
+    public BigDecimal getQuoteAssetVolume() {
         return quoteAssetVolume;
     }
 
-    public void setQuoteAssetVolume(double quoteAssetVolume) {
+    public void setQuoteAssetVolume(BigDecimal quoteAssetVolume) {
         this.quoteAssetVolume = quoteAssetVolume;
     }
 
@@ -87,19 +88,19 @@ public class Candle {
         this.numberOfTrades = numberOfTrades;
     }
 
-    public double getTakerBuyBaseAssetVolume() {
+    public BigDecimal getTakerBuyBaseAssetVolume() {
         return takerBuyBaseAssetVolume;
     }
 
-    public void setTakerBuyBaseAssetVolume(double takerBuyBaseAssetVolume) {
+    public void setTakerBuyBaseAssetVolume(BigDecimal takerBuyBaseAssetVolume) {
         this.takerBuyBaseAssetVolume = takerBuyBaseAssetVolume;
     }
 
-    public double getTakerBuyQuoteAssetVolume() {
+    public BigDecimal getTakerBuyQuoteAssetVolume() {
         return takerBuyQuoteAssetVolume;
     }
 
-    public void setTakerBuyQuoteAssetVolume(double takerBuyQuoteAssetVolume) {
+    public void setTakerBuyQuoteAssetVolume(BigDecimal takerBuyQuoteAssetVolume) {
         this.takerBuyQuoteAssetVolume = takerBuyQuoteAssetVolume;
     }
 

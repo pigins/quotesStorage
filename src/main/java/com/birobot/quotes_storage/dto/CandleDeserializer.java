@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 
 public class CandleDeserializer extends JsonDeserializer<Candle> {
 
@@ -16,16 +17,16 @@ public class CandleDeserializer extends JsonDeserializer<Candle> {
         if (node.isArray()) {
             Candle candle = new Candle();
             candle.setOpenTime(DateUtil.toOffsetDateTime(node.get(0).asLong()));
-            candle.setOpen(Double.valueOf(node.get(1).asText()));
-            candle.setHigh(Double.valueOf(node.get(2).asText()));
-            candle.setLow(Double.valueOf(node.get(3).asText()));
-            candle.setClose(Double.valueOf(node.get(4).asText()));
-            candle.setVolume(Double.valueOf(node.get(5).asText()));
+            candle.setOpen(new BigDecimal(node.get(1).asText()));
+            candle.setHigh(new BigDecimal(node.get(2).asText()));
+            candle.setLow(new BigDecimal(node.get(3).asText()));
+            candle.setClose(new BigDecimal(node.get(4).asText()));
+            candle.setVolume(new BigDecimal(node.get(5).asText()));
             candle.setCloseTime(DateUtil.toOffsetDateTime(node.get(6).asLong()));
-            candle.setQuoteAssetVolume(Double.valueOf(node.get(7).asText()));
+            candle.setQuoteAssetVolume(new BigDecimal(node.get(7).asText()));
             candle.setNumberOfTrades(node.get(8).asLong());
-            candle.setTakerBuyBaseAssetVolume(Double.valueOf(node.get(9).asText()));
-            candle.setTakerBuyQuoteAssetVolume(Double.valueOf(node.get(10).asText()));
+            candle.setTakerBuyBaseAssetVolume(new BigDecimal(node.get(9).asText()));
+            candle.setTakerBuyQuoteAssetVolume(new BigDecimal(node.get(10).asText()));
             return candle;
         } else return null;
     }

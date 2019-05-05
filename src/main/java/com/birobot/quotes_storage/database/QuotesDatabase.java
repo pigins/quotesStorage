@@ -63,16 +63,16 @@ public class QuotesDatabase {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 ps.setObject(1, quotes.get(i).getOpenTime());
-                ps.setDouble(2, quotes.get(i).getOpen());
-                ps.setDouble(3, quotes.get(i).getHigh());
-                ps.setDouble(4, quotes.get(i).getLow());
-                ps.setDouble(5, quotes.get(i).getClose());
-                ps.setDouble(6, quotes.get(i).getVolume());
+                ps.setBigDecimal(2, quotes.get(i).getOpen());
+                ps.setBigDecimal(3, quotes.get(i).getHigh());
+                ps.setBigDecimal(4, quotes.get(i).getLow());
+                ps.setBigDecimal(5, quotes.get(i).getClose());
+                ps.setBigDecimal(6, quotes.get(i).getVolume());
                 ps.setObject(7, quotes.get(i).getCloseTime());
-                ps.setDouble(8, quotes.get(i).getQuoteAssetVolume());
+                ps.setBigDecimal(8, quotes.get(i).getQuoteAssetVolume());
                 ps.setInt(9, (int) quotes.get(i).getNumberOfTrades());
-                ps.setDouble(10, quotes.get(i).getTakerBuyBaseAssetVolume());
-                ps.setDouble(11, quotes.get(i).getTakerBuyQuoteAssetVolume());
+                ps.setBigDecimal(10, quotes.get(i).getTakerBuyBaseAssetVolume());
+                ps.setBigDecimal(11, quotes.get(i).getTakerBuyQuoteAssetVolume());
             }
 
             @Override
@@ -104,16 +104,16 @@ public class QuotesDatabase {
         RowMapper<Candle> candleRowMapper = (rs, i) -> {
             Candle candle = new Candle();
             candle.setOpenTime((OffsetDateTime) rs.getObject(1));
-            candle.setOpen(rs.getDouble(2));
-            candle.setHigh(rs.getDouble(3));
-            candle.setLow(rs.getDouble(4));
-            candle.setClose(rs.getDouble(5));
-            candle.setVolume(rs.getDouble(6));
+            candle.setOpen(rs.getBigDecimal(2));
+            candle.setHigh(rs.getBigDecimal(3));
+            candle.setLow(rs.getBigDecimal(4));
+            candle.setClose(rs.getBigDecimal(5));
+            candle.setVolume(rs.getBigDecimal(6));
             candle.setCloseTime((OffsetDateTime) rs.getObject(7));
-            candle.setQuoteAssetVolume(rs.getDouble(8));
+            candle.setQuoteAssetVolume(rs.getBigDecimal(8));
             candle.setNumberOfTrades(rs.getInt(9));
-            candle.setTakerBuyBaseAssetVolume(rs.getDouble(10));
-            candle.setTakerBuyQuoteAssetVolume(rs.getDouble(11));
+            candle.setTakerBuyBaseAssetVolume(rs.getBigDecimal(10));
+            candle.setTakerBuyQuoteAssetVolume(rs.getBigDecimal(11));
             return candle;
         };
         if (begin == null && end == null) {
@@ -172,16 +172,16 @@ public class QuotesDatabase {
     private void createQuotesTable(String tableName) {
         String sb = String.format("CREATE TABLE %s (", tableName) +
                 "  open_time                TIMESTAMP WITH TIME ZONE PRIMARY KEY," +
-                "  open                     DOUBLE NOT NULL," +
-                "  high                     DOUBLE NOT NULL," +
-                "  low                      DOUBLE NOT NULL," +
-                "  close                    DOUBLE NOT NULL," +
-                "  volume                   DOUBLE NOT NULL," +
+                "  open                     DECIMAL(20, 8) NOT NULL," +
+                "  high                     DECIMAL(20, 8) NOT NULL," +
+                "  low                      DECIMAL(20, 8) NOT NULL," +
+                "  close                    DECIMAL(20, 8) NOT NULL," +
+                "  volume                   DECIMAL(22, 8) NOT NULL," +
                 "  close_time               TIMESTAMP WITH TIME ZONE NOT NULL," +
-                "  quote_asset_volume       DOUBLE NOT NULL," +
+                "  quote_asset_volume       DECIMAL(22, 8) NOT NULL," +
                 "  number_of_trades         INT    NOT NULL," +
-                "  takerBuyBaseAssetVolume  DOUBLE NOT NULL," +
-                "  takerBuyQuoteAssetVolume DOUBLE NOT NULL )";
+                "  takerBuyBaseAssetVolume  DECIMAL(22, 8) NOT NULL," +
+                "  takerBuyQuoteAssetVolume DECIMAL(22, 8) NOT NULL )";
         template.execute(sb);
         template.execute("CREATE INDEX " + tableName + "_CLOSE_TIME ON " + tableName + "(CLOSE_TIME)");
     }
