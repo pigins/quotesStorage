@@ -199,7 +199,7 @@ public class QuotesDatabase {
     }
 
     private void createStructure() {
-        template.execute(String.format("CREATE SCHEMA IF NOT EXISTS %s", dbConfig.getSchemaName()));
+        template.execute(String.format("ALTER SCHEMA PUBLIC RENAME TO %s", dbConfig.getSchemaName()));
     }
 
     private void createTemplate() {
@@ -208,6 +208,7 @@ public class QuotesDatabase {
         dataSource.setUrl(url);
         dataSource.setUser("SA");
         dataSource.setPassword("");
+
         template = new JdbcTemplate(dataSource);
     }
 }
