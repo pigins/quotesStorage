@@ -151,8 +151,7 @@ public class QuotesDatabase {
     }
 
     private boolean tableExist(String tableName) {
-        try {
-            Connection conn = template.getDataSource().getConnection();
+        try (Connection conn = template.getDataSource().getConnection()) {
             boolean tExists = false;
             try (ResultSet rs = conn.getMetaData().getTables(null, null, tableName, null)) {
                 while (rs.next()) {

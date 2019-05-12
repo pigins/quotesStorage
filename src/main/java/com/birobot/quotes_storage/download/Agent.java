@@ -35,6 +35,9 @@ class Agent {
             database.createQuotesTableIfNotExist(symbol);
         } else {
             beginDate = database.getLatestCloseDate(symbol);
+            if (beginDate == null) {
+                beginDate = client.getDateOfFirstOpen(symbol);
+            }
         }
         latestClose = beginDate;
     }
